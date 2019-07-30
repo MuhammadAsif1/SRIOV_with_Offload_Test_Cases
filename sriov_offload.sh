@@ -57,3 +57,4 @@ create_sriov_and_ovs_offload_enabled_instance()
 ################################################################
 ################################# ------- Main----> function calls ----------#####################
 #verify_vfs_are_created
+#create_sriov_and_ovs_offload_enabled_instance
