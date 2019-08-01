@@ -16,9 +16,16 @@ output3=''
 pf_id='' #pd id from compute nodes
 vfs_output='' #output of 'ip link show $pf_id'
 
+flavor='m1.sriov_ovs_offload'
 
-
-
+physical_network='physint'
+network='sriov_net'
+subnet='sriov_sub'
+port='sriov_p1'
+availability_zone='sriov'
+image='centos'
+instance='sriov_vm'
+vm_on_node='compute_node1_ip'
 ################################################################
 validate_the_switch_mode_for_ovs-offloading()
 {
@@ -49,9 +56,46 @@ verify_vfs_are_created()
 ################################################################
 create_sriov_and_ovs_offload_enabled_instance()
 {
-  
+  echo "========= Creating flavor ========"
+  echo "========= Creating flavor ========" > create_sriov_and_ovs_offload_enabled_instance.log
+  output1=$(openstack flavor create $flavor --ram 4096 --disk 150 --vcpu 2)
+  echo "$output1"
+  echo "$output1" >> create_sriov_and_ovs_offload_enabled_instance.log
+  echo "========= Setting flavor Properites ========"
+  echo "========= Setting flavor Properites ========" >> create_sriov_and_ovs_offload_enabled_instance.log
+  output1=$(openstack flavor set --property sriov=true --property hw:cpu_policy=dedicated --property hw:mem_page_size=1GB $flavor)
+  echo "$output1"
+  echo "$output1" >> create_sriov_and_ovs_offload_enabled_instance.log
+  echo "========= Creating SRIOV Enabled Network ========"
+  echo "========= Creating SRIOV Enabled Network ========" >> create_sriov_and_ovs_offload_enabled_instance.log
+  output1=$(openstack network create --provider-network-type=vlan --provider-physical-network=$physical_network $network)
+  echo "$output1"
+  echo "$output1" >> create_sriov_and_ovs_offload_enabled_instance.log
+  echo "========= Creating SRIOV Subent ========"
+  echo "========= Creating SRIOV Subent ========" >> create_sriov_and_ovs_offload_enabled_instance.log
+  output1=$(openstack subnet create --project admin --cidr 10.0.10.0/24 --dhcp --network $network --allocation-pool start=10.0.10.20,end=10.0.10.50 $subnet)
+  echo "$output1"
+  echo "$output1" >> create_sriov_and_ovs_offload_enabled_instance.log
+  echo "========= Creating Port ========"
+  echo "========= Creating Port ========" >> create_sriov_and_ovs_offload_enabled_instance.log
+  output1=$(openstack port create --network $network --vnic-type=direct --binding-profile '{"capabilities": ["switchdev"]}' $port)
+  echo "$output1"
+  echo "$output1" >> create_sriov_and_ovs_offload_enabled_instance.log
+  echo "========= Creating Instance ========"
+  echo "========= Creating Instance ========" >> create_sriov_and_ovs_offload_enabled_instance.log
+  output1=$(openstack server create --flavor $flavor --availability-zone $availability_zone --image $image --nic port-id=$port $instance)
+  echo "$output1"
+  echo "$output1" >> create_sriov_and_ovs_offload_enabled_instance.log
 }
-
+###############################################################
+verify_creation_of_representor_port()
+{
+  echo "================ Representor Port ================"
+  echo "================ Representor Port ================" >> verify_creation_of_representor_port.log
+  output1=$(ssh heat-admin@$compute_node1_ip 'sudo ovs-dpctl show')
+  echo "$output1"
+  echo "$output1" >> verify_creation_of_representor_port.log
+}
 
 
 ################################################################
