@@ -22,7 +22,9 @@ physical_network='physint'
 network='sriov_net'
 subnet='sriov_sub'
 port='sriov_p1'
-availability_zone='sriov'
+port2='sriov_p2'
+availability_zone1='nova0'
+availability_zone2='nova1'
 image='centos'
 instance='sriov_vm1'
 instance2='sriov_vm2'
@@ -30,6 +32,7 @@ vm_on_node='compute_node1_ip'
 public_network='public'
 router='sriov_router1'
 Floating_IP=''
+Floating_IP2=''
 ################################################################
 validate_the_switch_mode_for_ovs-offloading()
 {
@@ -80,11 +83,6 @@ create_sriov_and_ovs_offload_enabled_instance()
   output1=$(openstack subnet create $subnet --network $network --subnet-range 192.168.50.0/24)
   echo "$output1"
   echo "$output1" >> create_sriov_and_ovs_offload_enabled_instance.log
-  echo "========= Creating Port ========"
-  echo "========= Creating Port ========" >> create_sriov_and_ovs_offload_enabled_instance.log
-  output1=$(openstack port create --network $network --vnic-type=direct --binding-profile '{"capabilities": ["switchdev"]}' $port)
-  echo "$output1"
-  echo "$output1" >> create_sriov_and_ovs_offload_enabled_instance.log
   echo "========= Creating Router ========"
   echo "========= Creating Router ========" >> create_sriov_and_ovs_offload_enabled_instance.log
   output1=$(openstack router create $router)
@@ -98,13 +96,32 @@ create_sriov_and_ovs_offload_enabled_instance()
   output1=$(openstack router set $router --external-gateway $public_network)
   echo "$output1"
   echo "$output1" >> create_sriov_and_ovs_offload_enabled_instance.log
-  echo "========= Creating Instance ========"
-  echo "========= Creating Instance ========" >> create_sriov_and_ovs_offload_enabled_instance.log
-  output1=$(openstack server create --flavor $flavor --availability-zone $availability_zone --image $image --nic port-id=$port $instance)
+  #### Creating Port 1 for instance 1
+  echo "========= Creating Port 1 ========"
+  echo "========= Creating Port 1 ========" >> create_sriov_and_ovs_offload_enabled_instance.log
+  output1=$(openstack port create --network $network --vnic-type=direct --binding-profile '{"capabilities": ["switchdev"]}' $port)
   echo "$output1"
   echo "$output1" >> create_sriov_and_ovs_offload_enabled_instance.log
-  #################
+  #### Creating Port 2 for instance 2
+  echo "========= Creating Port 2 ========"
+  echo "========= Creating Port 2 ========" >> create_sriov_and_ovs_offload_enabled_instance.log
+  output1=$(openstack port create --network $network --vnic-type=direct --binding-profile '{"capabilities": ["switchdev"]}' $port2)
+  echo "$output1"
+  echo "$output1" >> create_sriov_and_ovs_offload_enabled_instance.log
+  ###creating instance 1 on availability_zone1=nova0
+  echo "========= Creating Instance 1 ========"
+  echo "========= Creating Instance 1 ========" >> create_sriov_and_ovs_offload_enabled_instance.log
+  output1=$(openstack server create --flavor $flavor --availability-zone $availability_zone1 --image $image --nic port-id=$port $instance)
+  echo "$output1"
+  echo "$output1" >> create_sriov_and_ovs_offload_enabled_instance.log
   sleep 2m
+  echo "========= Creating Instance 2 ========"
+  echo "========= Creating Instance 2 ========" >> create_sriov_and_ovs_offload_enabled_instance.log
+  output1=$(openstack server create --flavor $flavor --availability-zone $availability_zone1 --image $image --nic port-id=$port2 $instance2)
+  echo "$output1"
+  echo "$output1" >> create_sriov_and_ovs_offload_enabled_instance.log
+  sleep 2m
+  ##################### conditons for instance1 #############
   output=$(openstack server show $instance | awk '/status/ {print $4}')
   if [ $output = 'ACTIVE' ]
   then
@@ -121,8 +138,8 @@ create_sriov_and_ovs_offload_enabled_instance()
     output=$(ping -c 1 $Floating_IP &> /dev/null && echo success || echo fail)
     if [ $output = 'success' ]
     then
-      echo '=========================== instance is reachable from external network ==========='
-      echo '=========================== instance is reachable from external network ===========' >> create_sriov_and_ovs_offload_enabled_instance.log
+      echo '=========================== instance 1 is reachable from external network ==========='
+      echo '=========================== instance 1 is reachable from external network ===========' >> create_sriov_and_ovs_offload_enabled_instance.log
       ping -w $Floating_IP
     else 
       echo '=========================== ping unsuccessfull, test case failde ==========='
@@ -131,9 +148,40 @@ create_sriov_and_ovs_offload_enabled_instance()
     fi
   else
     echo '========================================================================================='
-    echo '========================== Failed, Instance not created ======================='
+    echo '========================== Failed, Instance 1 not created ======================='
     echo '========================================================================================='
-    echo '========================== Failed, Instance not created =======================' >> create_sriov_and_ovs_offload_enabled_instance.log
+    echo '========================== Failed, Instance 1 not created =======================' >> create_sriov_and_ovs_offload_enabled_instance.log
+  fi
+  ######################################### conditions for instance 2 #######################
+  output=$(openstack server show $instance2 | awk '/status/ {print $4}')
+  if [ $output = 'ACTIVE' ]
+  then
+    echo '========================================================================================='
+    echo '===================== Instance 2 created  Created successfully ============================'
+    echo '========================================================================================='
+    echo '===================== Instance 2 created  Created successfully ============================' >> create_sriov_and_ovs_offload_enabled_instance.log
+    for i in {1};do openstack port list --server "$instance2" | awk -F "|" '/-/ {print $2}' | xargs -I{} openstack floating ip create --port {} public; echo "$instance2"; done
+    
+    echo "creating floating ip ........... " >> create_sriov_and_ovs_offload_enabled_instance.log
+    Floating_IP2=$(openstack server list | awk "/$instance2/"'{print $9}')
+    echo "$Floating_IP2" >> create_sriov_and_ovs_offload_enabled_instance.log
+    sleep 10
+    output=$(ping -c 1 $Floating_IP2 &> /dev/null && echo success || echo fail)
+    if [ $output = 'success' ]
+    then
+      echo '=========================== instance 2 is reachable from external network ==========='
+      echo '=========================== instance 2 is reachable from external network ===========' >> create_sriov_and_ovs_offload_enabled_instance.log
+      ping -w $Floating_IP2
+    else 
+      echo '=========================== ping unsuccessfull, test case failde ==========='
+      echo '=========================== ping unsuccessfull, test case failde ===========' >> create_sriov_and_ovs_offload_enabled_instance.log
+      ping -w $Floating_IP2
+    fi
+  else
+    echo '========================================================================================='
+    echo '========================== Failed, Instance 2 not created ======================='
+    echo '========================================================================================='
+    echo '========================== Failed, Instance 2 not created =======================' >> create_sriov_and_ovs_offload_enabled_instance.log
   fi
 }
 ###############################################################
