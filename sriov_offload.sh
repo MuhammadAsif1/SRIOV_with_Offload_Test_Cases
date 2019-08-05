@@ -102,25 +102,55 @@ create_sriov_and_ovs_offload_enabled_instance()
   output1=$(openstack port create --network $network --vnic-type=direct --binding-profile '{"capabilities": ["switchdev"]}' $port)
   echo "$output1"
   echo "$output1" >> create_sriov_and_ovs_offload_enabled_instance.log
-  #### Creating Port 2 for instance 2
-  echo "========= Creating Port 2 ========"
-  echo "========= Creating Port 2 ========" >> create_sriov_and_ovs_offload_enabled_instance.log
-  output1=$(openstack port create --network $network --vnic-type=direct --binding-profile '{"capabilities": ["switchdev"]}' $port2)
-  echo "$output1"
-  echo "$output1" >> create_sriov_and_ovs_offload_enabled_instance.log
-  ###creating instance 1 on availability_zone1=nova0
+  ###creating instance 1 on availability_zone=nova0
   echo "========= Creating Instance 1 ========"
   echo "========= Creating Instance 1 ========" >> create_sriov_and_ovs_offload_enabled_instance.log
   output1=$(openstack server create --flavor $flavor --availability-zone $availability_zone1 --image $image --nic port-id=$port $instance)
   echo "$output1"
   echo "$output1" >> create_sriov_and_ovs_offload_enabled_instance.log
   sleep 2m
-  echo "========= Creating Instance 2 ========"
-  echo "========= Creating Instance 2 ========" >> create_sriov_and_ovs_offload_enabled_instance.log
-  output1=$(openstack server create --flavor $flavor --availability-zone $availability_zone2 --image $image --nic port-id=$port2 $instance2)
-  echo "$output1"
-  echo "$output1" >> create_sriov_and_ovs_offload_enabled_instance.log
-  sleep 2m
+  if [ $1 == 0 ]
+  then
+    echo 'instance1 and instance2 on same network'
+    #### Creating Port 2 for instance 2
+    echo "========= Creating SRIOV Enabled Network ========"
+    echo "========= Creating SRIOV Enabled Network ========" >> create_sriov_and_ovs_offload_enabled_instance.log
+    output1=$(openstack network create --provider-network-type=vlan --provider-physical-network=$physical_network $network)
+    echo "$output1"
+    echo "$output1" >> create_sriov_and_ovs_offload_enabled_instance.log
+    echo "========= Creating SRIOV Subent ========"
+    echo "========= Creating SRIOV Subent ========" >> create_sriov_and_ovs_offload_enabled_instance.log
+    output1=$(openstack subnet create $subnet --network $network --subnet-range 192.168.50.0/24)
+    echo "$output1"
+    echo "$output1" >> create_sriov_and_ovs_offload_enabled_instance.log
+    echo "========= Creating Port 2 ========"
+    echo "========= Creating Port 2 ========" >> create_sriov_and_ovs_offload_enabled_instance.log
+    output1=$(openstack port create --network $network --vnic-type=direct --binding-profile '{"capabilities": ["switchdev"]}' $port2)
+    echo "$output1"
+    echo "$output1" >> create_sriov_and_ovs_offload_enabled_instance.log
+    ###creating instance 1 on availability_zone2=nova1  
+    echo "========= Creating Instance 2 ========"
+    echo "========= Creating Instance 2 ========" >> create_sriov_and_ovs_offload_enabled_instance.log
+    output1=$(openstack server create --flavor $flavor --availability-zone $availability_zone2 --image $image --nic port-id=$port2 $instance2)
+    echo "$output1"
+    echo "$output1" >> create_sriov_and_ovs_offload_enabled_instance.log
+    sleep 2m
+  else
+    echo 'instance1 and instance2 on different network'
+    #### Creating Port 2 for instance 2
+    echo "========= Creating Port 2 ========"
+    echo "========= Creating Port 2 ========" >> create_sriov_and_ovs_offload_enabled_instance.log
+    output1=$(openstack port create --network $network --vnic-type=direct --binding-profile '{"capabilities": ["switchdev"]}' $port2)
+    echo "$output1"
+    echo "$output1" >> create_sriov_and_ovs_offload_enabled_instance.log
+    ###creating instance 1 on availability_zone2=nova1  
+    echo "========= Creating Instance 2 ========"
+    echo "========= Creating Instance 2 ========" >> create_sriov_and_ovs_offload_enabled_instance.log
+    output1=$(openstack server create --flavor $flavor --availability-zone $availability_zone2 --image $image --nic port-id=$port2 $instance2)
+    echo "$output1"
+    echo "$output1" >> create_sriov_and_ovs_offload_enabled_instance.log
+    sleep 2m
+  fi
   ##################### conditons for instance1 #############
   output=$(openstack server show $instance | awk '/status/ {print $4}')
   if [ $output = 'ACTIVE' ]
@@ -198,5 +228,6 @@ verify_creation_of_representor_port()
 ################################################################
 ################################# ------- Main----> function calls ----------#####################
 #verify_vfs_are_created
-#create_sriov_and_ovs_offload_enabled_instance ### this function will create two instances on same or different compute node(depends on availability_zone1,availability_zone2 value), on same network..
-
+#create_sriov_and_ovs_offload_enabled_instance 0 ### this function will create two instances on same or different compute node(depends on availability_zone1,availability_zone2 value), on same network..
+## 0 ---------> for same network
+## 1 ---------> for different network
