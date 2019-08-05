@@ -117,7 +117,7 @@ create_sriov_and_ovs_offload_enabled_instance()
   sleep 2m
   echo "========= Creating Instance 2 ========"
   echo "========= Creating Instance 2 ========" >> create_sriov_and_ovs_offload_enabled_instance.log
-  output1=$(openstack server create --flavor $flavor --availability-zone $availability_zone1 --image $image --nic port-id=$port2 $instance2)
+  output1=$(openstack server create --flavor $flavor --availability-zone $availability_zone2 --image $image --nic port-id=$port2 $instance2)
   echo "$output1"
   echo "$output1" >> create_sriov_and_ovs_offload_enabled_instance.log
   sleep 2m
@@ -126,9 +126,9 @@ create_sriov_and_ovs_offload_enabled_instance()
   if [ $output = 'ACTIVE' ]
   then
     echo '========================================================================================='
-    echo '===================== Instance created  Created successfully ============================'
+    echo '===================== Instance 1 created  Created successfully ============================'
     echo '========================================================================================='
-    echo '===================== Instance created  Created successfully ============================' >> create_sriov_and_ovs_offload_enabled_instance.log
+    echo '===================== Instance 1 created  Created successfully ============================' >> create_sriov_and_ovs_offload_enabled_instance.log
     for i in {1};do openstack port list --server "$instance" | awk -F "|" '/-/ {print $2}' | xargs -I{} openstack floating ip create --port {} public; echo "$instance"; done
     
     echo "creating floating ip ........... " >> create_sriov_and_ovs_offload_enabled_instance.log
@@ -198,4 +198,5 @@ verify_creation_of_representor_port()
 ################################################################
 ################################# ------- Main----> function calls ----------#####################
 #verify_vfs_are_created
-#create_sriov_and_ovs_offload_enabled_instance
+#create_sriov_and_ovs_offload_enabled_instance ### this function will create two instances on same or different compute node(depends on availability_zone1,availability_zone2 value), on same network..
+
