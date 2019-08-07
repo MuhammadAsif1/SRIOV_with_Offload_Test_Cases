@@ -14,7 +14,7 @@ output1=''
 output2=''
 output3=''
 pf_id='' #pd id from compute nodes
-vfs_output='' #output of 'ip link show $pf_id'
+vfs_output='' #['p4p1','p8p1'] #output of 'ip link show $pf_id'
 
 flavor='m1.sriov_ovs_offload'
 
