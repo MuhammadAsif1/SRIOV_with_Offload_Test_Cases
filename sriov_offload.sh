@@ -226,28 +226,28 @@ create_sriov_and_ovs_offload_enabled_instance()
   if [ $output1 = 'ACTIVE' ] && [ $output2 = 'ACTIVE' ] ### if both instances are active
   then
     #### condition on instance 1
-    output=$(ssh -i ssh-key.pem centos@$Floating_IP "ping -c 1 $Floating_IP2 &> /dev/null && echo success || echo fail")
+    output=$(ssh -i /home/osp_admin/ssh-key.pem centos@$Floating_IP "ping -c 1 $Floating_IP2 &> /dev/null && echo success || echo fail")
     if [ $output = 'success' ]
     then
       echo '=========================== instance 1 can ping instance 2 ==========='
       echo '=========================== instance 1 can ping instance 2 ===========' >> create_sriov_and_ovs_offload_enabled_instance.log
-      ssh -i ssh-key.pem centos@$Floating_IP "ping -w 5 $Floating_IP2"
+      ssh -i /home/osp_admin/ssh-key.pem centos@$Floating_IP "ping -w 5 $Floating_IP2"
     else 
       echo '=========================== instance 1 can not ping instance 2 ==========='
       echo '=========================== instance 1 can not ping instance 2 ===========' >> create_sriov_and_ovs_offload_enabled_instance.log
-      ssh -i ssh-key.pem centos@$Floating_IP "ping -w 5 $Floating_IP2"
+      ssh -i /home/osp_admin/ssh-key.pem centos@$Floating_IP "ping -w 5 $Floating_IP2"
     fi
     #### condition on instance 2  
-    output=$(ssh -i ssh-key.pem centos@$Floating_IP2 "ping -c 1 $Floating_IP &> /dev/null && echo success || echo fail")
+    output=$(ssh -i /home/osp_admin/ssh-key.pem centos@$Floating_IP2 "ping -c 1 $Floating_IP &> /dev/null && echo success || echo fail")
     if [ $output = 'success' ]
     then
       echo '=========================== instance 2 can ping instance 1 ==========='
       echo '=========================== instance 2 can ping instance 1 ===========' >> create_sriov_and_ovs_offload_enabled_instance.log
-      ssh -i ssh-key.pem centos@$Floating_IP2 "ping -w 5 $Floating_IP"
+      ssh -i /home/osp_admin/ssh-key.pem centos@$Floating_IP2 "ping -w 5 $Floating_IP"
     else 
       echo '=========================== instance 2 can not ping instance 1 ==========='
       echo '=========================== instance 2 can not ping instance 1 ===========' >> create_sriov_and_ovs_offload_enabled_instance.log
-      ssh -i ssh-key.pem centos@$Floating_IP2 "ping -w 5 $Floating_IP"
+      ssh -i /home/osp_admin/ssh-key.pem centos@$Floating_IP2 "ping -w 5 $Floating_IP"
     fi  
   else
     echo '=========================== One of the instance or both are not ACTIVE'
@@ -273,7 +273,7 @@ reboot_instance()
   output=$(ssh -i ssh-key.pem centos@$Floating_IP 'sudo reboot')  ### rebooting instance 1
   echo "$output"
   echo "$output" > reboot_instance.log
-  output=$(ssh -i ssh-key.pem centos@$Floating_IP2 'sudo reboot')  ### rebooting instance 2
+  output=$(ssh -i /home/osp_admin/ssh-key.pem centos@$Floating_IP2 'sudo reboot')  ### rebooting instance 2
   echo "$output"
   echo "$output" > reboot_instance.log
   sleep 2m
