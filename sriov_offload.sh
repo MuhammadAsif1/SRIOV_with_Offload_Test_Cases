@@ -270,7 +270,7 @@ reboot_instance()
   #Floating_IP2='100.67.154.195'
   echo '============================== Rebooting Instance ==============================='
   echo '============================== Rebooting Instance ===============================' >> reboot_instance.log
-  output=$(ssh -i ssh-key.pem centos@$Floating_IP 'sudo reboot')  ### rebooting instance 1
+  output=$(ssh -i /home/osp_admin/ssh-key.pem centos@$Floating_IP 'sudo reboot')  ### rebooting instance 1
   echo "$output"
   echo "$output" > reboot_instance.log
   output=$(ssh -i /home/osp_admin/ssh-key.pem centos@$Floating_IP2 'sudo reboot')  ### rebooting instance 2
